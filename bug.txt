@@ -1,5 +1,5 @@
 function UIDropDownMenu_GetSelectedID(frame)容易受到污染，因为frame.selectedID被set污染了。
-UIDROPDOWNMENU_MENU_VALUE
+UIDROPDOWNMENU_MENU_VALUE -- 这个绝对不能被污染
 UIDROPDOWNMENU_MENU_LEVEL 这两个容易被污染
 
 move，点击魔兽好友会触发污染

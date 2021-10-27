@@ -16,7 +16,6 @@ local function color_change(button)
     -- local index = button.index
     local buttonType = button.buttonType
     local id = button.id
-    local nameText
     if buttonType == FRIENDS_BUTTON_TYPE_WOW then -- 魔兽
         local info = C_FriendList.GetFriendInfoByIndex(id)
         local connected = info.connected -- 是否在线
@@ -30,7 +29,7 @@ local function color_change(button)
             local levelColorMixin = CreateColor(levelColor.r, levelColor.g, levelColor.b) -- 获取等级颜色的Mixin
             local levelText = levelColorMixin:WrapTextInColorCode("L"..level) -- 用转义序列包装等级文本
             local classColorMixin = C_ClassColor.GetClassColor(classFile) -- 获取职业颜色的Mixin
-            nameText = classColorMixin:WrapTextInColorCode(name) -- 用转义序列包装名称文本
+            local nameText = classColorMixin:WrapTextInColorCode(name) -- 用转义序列包装名称文本
             nameText = levelText.." "..nameText
             button.name:SetText(nameText)
         end
@@ -51,6 +50,7 @@ local function color_change(button)
 
         if accountInfo then
             if characterName then
+                local nameText
                 -- WOW_PROJECT_MAINLINE 正式服
                 -- WOW_PROJECT_CLASSIC 怀旧服
                 -- INVITE_RESTRICTION_WOW_PROJECT_CLASSIC 燃烧远征
@@ -88,6 +88,15 @@ local function color_change(button)
 end
 
 hooksecurefunc("FriendsFrame_UpdateFriendButton", color_change)
-if AnotherFriendsFrame_UpdateFriendButton then
-    hooksecurefunc("AnotherFriendsFrame_UpdateFriendButton", color_change)
+
+-- 做一个后钩处理。如果使用hooksecurefunc会污染路径。
+if AnotherFriendsListFrameScrollFrame then
+    local origfunc = AnotherFriendsFrame_UpdateFriendButton
+    local function newfunc(arg1, ...)
+        return arg1, color_change(...)
+    end
+
+    function AnotherFriendsFrame_UpdateFriendButton(...)
+        return newfunc(origfunc(...), ...)
+    end
 end

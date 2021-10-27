@@ -75,7 +75,7 @@ local function ini_RaidGroup()
 end
 
 
-local function event_deal(self, event)
+local function event_Handler(self, event)
 	if event == "GROUP_ROSTER_UPDATE" then
 		ini_RaidGroup()
 	elseif ( event == "PLAYER_LOGIN" ) then
@@ -92,8 +92,8 @@ ini_RaidFrame()
 -- 	ini_RaidGroup()
 -- end)
 
-local frametemp = CreateFrame("Frame")
-frametemp:SetScript("OnEvent", event_deal)
-frametemp:RegisterEvent("GROUP_ROSTER_UPDATE")
-frametemp:RegisterEvent("PLAYER_LOGIN")
+local Listener = CreateFrame("Frame")
+Listener:SetScript("OnEvent", event_Handler)
+Listener:RegisterEvent("GROUP_ROSTER_UPDATE")
+Listener:RegisterEvent("PLAYER_LOGIN")
 -- frametemp:RegisterEvent("PLAYER_ENTERING_WORLD")

@@ -25,7 +25,7 @@ local function ini_SetFrameTab()
     -- 设置标签的ID
     local SET_FRIEND_TAB_ID = 5
 
-    -- 创建一个名为FriendsFrameTab5的标签。为了兼容暴雪的API，命名只能是FriendsFrameTab5。
+    -- 创建一个名为FriendsFrameTab5的标签。命名与暴雪保持一致FriendsFrameTab5。
     local Set_Tab = CreateFrame("Button", "FriendsFrameTab5", FriendsFrame, "FriendsFrameTabTemplate", SET_FRIEND_TAB_ID)
     Set_Tab:SetPoint("LEFT" , FriendsFrameTab4 , "RIGHT" , -15 , 0)
     Set_Tab:SetText("设置")
@@ -154,13 +154,11 @@ end
 
 ini_SetFrameTab()
 ini_SetFramePanel()
-local Listener = CreateFrame('Frame', nil)
-Listener:SetScript('OnEvent', event_Handler)
+local Listener = CreateFrame("Frame")
+Listener:SetScript("OnEvent", event_Handler)
 -- Listener:RegisterEvent("PLAYER_ENTERING_WORLD") -- 玩家进入游戏  reload结束之后也会触发 玩家进出副本（读条）后会触发
 -- Listener:RegisterEvent("PLAYER_LEAVING_WORLD") -- 玩家离开游戏 reload开始之前也会触发 玩家进出副本（读条）前会触发
 Listener:RegisterEvent("PLAYER_LOGIN") -- 玩家登录游戏 reload结束之后也会触发
 -- Listener:RegisterEvent("PLAYER_LOGOUT") -- 玩家退出游戏 reload开始之前也会触发
 -- Listener:RegisterEvent("ADDON_LOADED") -- 当任何一个插件被加载的时候触发该事件
-
-
 

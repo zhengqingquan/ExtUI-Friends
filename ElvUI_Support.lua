@@ -16,6 +16,6 @@ local function event_Handler(self, event, ...)
 end
 
 
-local Listener = CreateFrame('Frame', nil)
+local Listener = CreateFrame("Frame")
 Listener:RegisterEvent("PLAYER_LOGIN")
-Listener:SetScript('OnEvent', event_Handler)
+Listener:SetScript("OnEvent", event_Handler)

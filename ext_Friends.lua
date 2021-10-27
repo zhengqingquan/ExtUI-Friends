@@ -85,6 +85,140 @@ local function AnotherFriendsList_GetScrollFrameTopButton(offset)
 	end
 end
 
+-- 按钮的更新，并返回按钮高度，用于重新调整滚动框体
+-- 无法local 因为颜色需要后钩处理
+function AnotherFriendsFrame_UpdateFriendButton(button)
+	local index = button.index; -- 当前按钮的索引 这里指的是第几个按钮
+	button.buttonType = AnotherFriendListEntries[index].buttonType; -- 当前按钮的类型
+	button.id = AnotherFriendListEntries[index].id; -- 当前按钮的id
+	local height = FRIENDS_BUTTON_HEIGHTS[button.buttonType]; -- 返回当前按钮的高度
+	local nameText, nameColor, infoText, isFavoriteFriend, statusTexture; -- 名字，颜色，额外信息，是否亲密，纹理状态
+	local hasTravelPassButton = false; -- 邀请加入队伍
+	
+	if button.buttonType == FRIENDS_BUTTON_TYPE_WOW then -- 魔兽好友
+		local info = C_FriendList.GetFriendInfoByIndex(button.id);
+		if info.connected then
+			button.background:SetColorTexture(FRIENDS_WOW_BACKGROUND_COLOR.r, FRIENDS_WOW_BACKGROUND_COLOR.g, FRIENDS_WOW_BACKGROUND_COLOR.b, FRIENDS_WOW_BACKGROUND_COLOR.a);
+			if info.afk then
+				button.status:SetTexture(FRIENDS_TEXTURE_AFK);
+			elseif info.dnd then
+				button.status:SetTexture(FRIENDS_TEXTURE_DND);
+			else
+				button.status:SetTexture(FRIENDS_TEXTURE_ONLINE);
+			end
+			nameText = info.name..", "..format(FRIENDS_LEVEL_TEMPLATE, info.level, info.className);
+			nameColor = FRIENDS_WOW_NAME_COLOR;
+			infoText = GetOnlineInfoText(BNET_CLIENT_WOW, info.mobile, info.rafLinkType, info.area);
+		else
+			button.background:SetColorTexture(FRIENDS_OFFLINE_BACKGROUND_COLOR.r, FRIENDS_OFFLINE_BACKGROUND_COLOR.g, FRIENDS_OFFLINE_BACKGROUND_COLOR.b, FRIENDS_OFFLINE_BACKGROUND_COLOR.a);
+			button.status:SetTexture(FRIENDS_TEXTURE_OFFLINE);
+			nameText = info.name;
+			nameColor = FRIENDS_GRAY_COLOR;
+			infoText = FRIENDS_LIST_OFFLINE;
+		end
+		button.gameIcon:Hide();
+		button.summonButton:ClearAllPoints();
+		button.summonButton:SetPoint("TOPRIGHT", button, "TOPRIGHT", 1, -1);
+		FriendsFrame_SummonButton_Update(button.summonButton);
+	elseif button.buttonType == FRIENDS_BUTTON_TYPE_BNET then -- 战网好友
+		local accountInfo = C_BattleNet.GetFriendAccountInfo(AnotherFriendListEntries[index].id); -- 获取战网账号信息 这里需要注意。跟战网的索引有个偏移量
+		if accountInfo then
+			nameText, nameColor, statusTexture = FriendsFrame_GetBNetAccountNameAndStatus(accountInfo); -- 账号的角色信息，名称，颜色，状态材质
+			isFavoriteFriend = accountInfo.isFavorite;
+			button.status:SetTexture(statusTexture);
+			if accountInfo.gameAccountInfo.isOnline then
+				button.background:SetColorTexture(FRIENDS_BNET_BACKGROUND_COLOR.r, FRIENDS_BNET_BACKGROUND_COLOR.g, FRIENDS_BNET_BACKGROUND_COLOR.b, FRIENDS_BNET_BACKGROUND_COLOR.a);
+
+				-- 显示按钮下方的信息，如正在使用战网应用程序
+				if ShowRichPresenceOnly(accountInfo.gameAccountInfo.clientProgram, accountInfo.gameAccountInfo.wowProjectID, accountInfo.gameAccountInfo.factionName, accountInfo.gameAccountInfo.realmID) then
+					infoText = GetOnlineInfoText(accountInfo.gameAccountInfo.clientProgram, accountInfo.gameAccountInfo.isWowMobile, accountInfo.rafLinkType, accountInfo.gameAccountInfo.richPresence);
+				else
+					infoText = GetOnlineInfoText(accountInfo.gameAccountInfo.clientProgram, accountInfo.gameAccountInfo.isWowMobile, accountInfo.rafLinkType, accountInfo.gameAccountInfo.areaName);
+				end
+
+				-- 设置按钮的游戏图标材质
+				button.gameIcon:SetTexture(BNet_GetClientTexture(accountInfo.gameAccountInfo.clientProgram));
+				local fadeIcon = (accountInfo.gameAccountInfo.clientProgram == BNET_CLIENT_WOW) and (accountInfo.gameAccountInfo.wowProjectID ~= WOW_PROJECT_ID);
+				if fadeIcon then
+					button.gameIcon:SetAlpha(0.6);
+				else
+					button.gameIcon:SetAlpha(1);
+				end
+
+				-- Note - this logic should match the logic in FriendsFrame_ShouldShowSummonButton
+				-- 注意 - 此逻辑应与FriendsFrame_ShouldShowSummonButton中的逻辑相匹配
+				local shouldShowSummonButton = FriendsFrame_ShouldShowSummonButton(button.summonButton);
+				button.gameIcon:SetShown(not shouldShowSummonButton);
+
+				-- travel pass
+				hasTravelPassButton = true;
+				local restriction = FriendsFrame_GetInviteRestriction(button.id);
+
+				if restriction == INVITE_RESTRICTION_NONE then
+					button.travelPassButton:Enable();
+				else
+					button.travelPassButton:Disable();
+				end
+			else
+				button.background:SetColorTexture(FRIENDS_OFFLINE_BACKGROUND_COLOR.r, FRIENDS_OFFLINE_BACKGROUND_COLOR.g, FRIENDS_OFFLINE_BACKGROUND_COLOR.b, FRIENDS_OFFLINE_BACKGROUND_COLOR.a);
+				button.gameIcon:Hide();
+				infoText = FriendsFrame_GetLastOnlineText(accountInfo);
+			end
+			button.summonButton:ClearAllPoints();
+			button.summonButton:SetPoint("CENTER", button.gameIcon, "CENTER", 1, 0);
+			FriendsFrame_SummonButton_Update(button.summonButton);
+		end
+	elseif button.buttonType == FRIENDS_BUTTON_TYPE_DIVIDER then -- 分隔线
+		local scrollFrame = AnotherFriendsListFrameScrollFrame;
+		local divider = scrollFrame.dividerPool:Acquire();
+		divider:SetParent(scrollFrame.ScrollChild);
+		divider:SetAllPoints(button);
+		divider:Show();
+		nameText = nil;
+	end
+
+
+	if hasTravelPassButton then
+		button.travelPassButton:Show();
+	else
+		button.travelPassButton:Hide();
+	end
+
+	-- selection
+	-- 按钮是否被选中
+	if  (FriendsFrame.selectedFriendType == AnotherFriendListEntries[index].buttonType) and (FriendsFrame.selectedFriend == AnotherFriendListEntries[index].id) then
+		button:LockHighlight();
+	else
+		button:UnlockHighlight();
+	end
+
+	-- finish setting up button if it's not a header
+	-- 如果不是标题或分隔线，则完成按钮的设置。
+	if nameText then
+		button.name:SetText(nameText);
+		button.name:SetTextColor(nameColor.r, nameColor.g, nameColor.b);
+		button.info:SetText(infoText);
+		button:Show();
+		if isFavoriteFriend then
+			button.Favorite:Show();
+			button.Favorite:ClearAllPoints()
+			button.Favorite:SetPoint("TOPLEFT", button.name, "TOPLEFT", button.name:GetStringWidth(), 0);
+		else
+			button.Favorite:Hide();
+		end
+	else
+		button:Hide();
+	end
+
+	-- update the tooltip if hovering over a button
+	-- 如果将鼠标悬停在按钮上，则更新鼠标提示
+	if (FriendsTooltip.button == button) or (GetMouseFocus() == button) then
+		button:OnEnter();
+	end
+
+	return height
+end
+
 -- 滚动框体的更新
 -- 此函数执行之前必须保证AnotherFriendsList_Update被执行一次，否则numFriendButtons会是一个nil值
 local function AnotherFriendsFrame_UpdateFriends()
@@ -266,157 +400,6 @@ local function AnotherFriendsList_Update(forceUpdate)
 	AnotherFriendsFrame_UpdateFriends()
 end
 
--- 按钮的更新，并返回按钮高度，用于重新调整滚动框体
--- 无法local 因为颜色需要后钩处理
-function AnotherFriendsFrame_UpdateFriendButton(button)
-	local index = button.index; -- 当前按钮的索引 这里指的是第几个按钮
-	button.buttonType = AnotherFriendListEntries[index].buttonType; -- 当前按钮的类型
-	button.id = AnotherFriendListEntries[index].id; -- 当前按钮的id
-	local height = FRIENDS_BUTTON_HEIGHTS[button.buttonType]; -- 返回当前按钮的高度
-	local nameText, nameColor, infoText, isFavoriteFriend, statusTexture; -- 名字，颜色，额外信息，是否亲密，纹理状态
-	local hasTravelPassButton = false; -- 邀请加入队伍
-	
-	if button.buttonType == FRIENDS_BUTTON_TYPE_WOW then -- 魔兽好友
-		local info = C_FriendList.GetFriendInfoByIndex(button.id);
-		if info.connected then
-			button.background:SetColorTexture(FRIENDS_WOW_BACKGROUND_COLOR.r, FRIENDS_WOW_BACKGROUND_COLOR.g, FRIENDS_WOW_BACKGROUND_COLOR.b, FRIENDS_WOW_BACKGROUND_COLOR.a);
-			if info.afk then
-				button.status:SetTexture(FRIENDS_TEXTURE_AFK);
-			elseif info.dnd then
-				button.status:SetTexture(FRIENDS_TEXTURE_DND);
-			else
-				button.status:SetTexture(FRIENDS_TEXTURE_ONLINE);
-			end
-			nameText = info.name..", "..format(FRIENDS_LEVEL_TEMPLATE, info.level, info.className);
-			nameColor = FRIENDS_WOW_NAME_COLOR;
-			infoText = GetOnlineInfoText(BNET_CLIENT_WOW, info.mobile, info.rafLinkType, info.area);
-		else
-			button.background:SetColorTexture(FRIENDS_OFFLINE_BACKGROUND_COLOR.r, FRIENDS_OFFLINE_BACKGROUND_COLOR.g, FRIENDS_OFFLINE_BACKGROUND_COLOR.b, FRIENDS_OFFLINE_BACKGROUND_COLOR.a);
-			button.status:SetTexture(FRIENDS_TEXTURE_OFFLINE);
-			nameText = info.name;
-			nameColor = FRIENDS_GRAY_COLOR;
-			infoText = FRIENDS_LIST_OFFLINE;
-		end
-		button.gameIcon:Hide();
-		button.summonButton:ClearAllPoints();
-		button.summonButton:SetPoint("TOPRIGHT", button, "TOPRIGHT", 1, -1);
-		FriendsFrame_SummonButton_Update(button.summonButton);
-	elseif button.buttonType == FRIENDS_BUTTON_TYPE_BNET then -- 战网好友
-		local accountInfo = C_BattleNet.GetFriendAccountInfo(AnotherFriendListEntries[index].id); -- 获取战网账号信息 这里需要注意。跟战网的索引有个偏移量
-		if accountInfo then
-			nameText, nameColor, statusTexture = FriendsFrame_GetBNetAccountNameAndStatus(accountInfo); -- 账号的角色信息，名称，颜色，状态材质
-			isFavoriteFriend = accountInfo.isFavorite;
-			button.status:SetTexture(statusTexture);
-			if accountInfo.gameAccountInfo.isOnline then
-				button.background:SetColorTexture(FRIENDS_BNET_BACKGROUND_COLOR.r, FRIENDS_BNET_BACKGROUND_COLOR.g, FRIENDS_BNET_BACKGROUND_COLOR.b, FRIENDS_BNET_BACKGROUND_COLOR.a);
-
-				-- 显示按钮下方的信息，如正在使用战网应用程序
-				if ShowRichPresenceOnly(accountInfo.gameAccountInfo.clientProgram, accountInfo.gameAccountInfo.wowProjectID, accountInfo.gameAccountInfo.factionName, accountInfo.gameAccountInfo.realmID) then
-					infoText = GetOnlineInfoText(accountInfo.gameAccountInfo.clientProgram, accountInfo.gameAccountInfo.isWowMobile, accountInfo.rafLinkType, accountInfo.gameAccountInfo.richPresence);
-				else
-					infoText = GetOnlineInfoText(accountInfo.gameAccountInfo.clientProgram, accountInfo.gameAccountInfo.isWowMobile, accountInfo.rafLinkType, accountInfo.gameAccountInfo.areaName);
-				end
-
-				-- 设置按钮的游戏图标材质
-				button.gameIcon:SetTexture(BNet_GetClientTexture(accountInfo.gameAccountInfo.clientProgram));
-				local fadeIcon = (accountInfo.gameAccountInfo.clientProgram == BNET_CLIENT_WOW) and (accountInfo.gameAccountInfo.wowProjectID ~= WOW_PROJECT_ID);
-				if fadeIcon then
-					button.gameIcon:SetAlpha(0.6);
-				else
-					button.gameIcon:SetAlpha(1);
-				end
-
-				-- Note - this logic should match the logic in FriendsFrame_ShouldShowSummonButton
-				-- 注意 - 此逻辑应与FriendsFrame_ShouldShowSummonButton中的逻辑相匹配
-				local shouldShowSummonButton = FriendsFrame_ShouldShowSummonButton(button.summonButton);
-				button.gameIcon:SetShown(not shouldShowSummonButton);
-
-				-- travel pass
-				hasTravelPassButton = true;
-				local restriction = FriendsFrame_GetInviteRestriction(button.id);
-
-				if restriction == INVITE_RESTRICTION_NONE then
-					button.travelPassButton:Enable();
-				else
-					button.travelPassButton:Disable();
-				end
-			else
-				button.background:SetColorTexture(FRIENDS_OFFLINE_BACKGROUND_COLOR.r, FRIENDS_OFFLINE_BACKGROUND_COLOR.g, FRIENDS_OFFLINE_BACKGROUND_COLOR.b, FRIENDS_OFFLINE_BACKGROUND_COLOR.a);
-				button.gameIcon:Hide();
-				infoText = FriendsFrame_GetLastOnlineText(accountInfo);
-			end
-			button.summonButton:ClearAllPoints();
-			button.summonButton:SetPoint("CENTER", button.gameIcon, "CENTER", 1, 0);
-			FriendsFrame_SummonButton_Update(button.summonButton);
-		end
-	elseif button.buttonType == FRIENDS_BUTTON_TYPE_DIVIDER then -- 分隔线
-		local scrollFrame = AnotherFriendsListFrameScrollFrame;
-		local divider = scrollFrame.dividerPool:Acquire();
-		divider:SetParent(scrollFrame.ScrollChild);
-		divider:SetAllPoints(button);
-		divider:Show();
-		nameText = nil;
-	end
-
-
-	if hasTravelPassButton then
-		button.travelPassButton:Show();
-	else
-		button.travelPassButton:Hide();
-	end
-
-	-- selection
-	-- 按钮是否被选中
-	if  (FriendsFrame.selectedFriendType == AnotherFriendListEntries[index].buttonType) and (FriendsFrame.selectedFriend == AnotherFriendListEntries[index].id) then
-		button:LockHighlight();
-	else
-		button:UnlockHighlight();
-	end
-
-	-- finish setting up button if it's not a header
-	-- 如果不是标题或分隔线，则完成按钮的设置。
-	if nameText then
-		button.name:SetText(nameText);
-		button.name:SetTextColor(nameColor.r, nameColor.g, nameColor.b);
-		button.info:SetText(infoText);
-		button:Show();
-		if isFavoriteFriend then
-			button.Favorite:Show();
-			button.Favorite:ClearAllPoints()
-			button.Favorite:SetPoint("TOPLEFT", button.name, "TOPLEFT", button.name:GetStringWidth(), 0);
-		else
-			button.Favorite:Hide();
-		end
-	else
-		button:Hide();
-	end
-
-	-- update the tooltip if hovering over a button
-	-- 如果将鼠标悬停在按钮上，则更新鼠标提示
-	if (FriendsTooltip.button == button) or (GetMouseFocus() == button) then
-		button:OnEnter();
-	end
-
-	return height
-end
-
--- 滚动框体的初始化
-local function ini_FriendFrame()
-
-	-- 在好友框体中创建另一个滚动框体
-	local AnotherFrameScrollFrame = CreateFrame("ScrollFrame","AnotherFriendsListFrameScrollFrame",FriendsListFrame,"FriendsFrameScrollFrame")
-	AnotherFrameScrollFrame:ClearAllPoints()
-	AnotherFrameScrollFrame:SetPoint("LEFT", FriendsListFrameScrollFrame,"RIGHT", 50,0)
-	AnotherFrameScrollFrame.update = AnotherFriendsFrame_UpdateFriends; -- 滚动框体的自更新
-	AnotherFrameScrollFrame.dynamic = AnotherFriendsList_GetScrollFrameTopButton; -- 
-	-- scrollFrame.PendingInvitesHeaderButton:SetParent(scrollFrame.ScrollChild); -- 可能是获得好友邀请的按钮，我这次没有继承这个组件
-	AnotherFrameScrollFrame.dividerPool = CreateFramePool("FRAME", AnotherFrameScrollFrame, "FriendsFrameFriendDividerTemplate");
-	AnotherFrameScrollFrame.invitePool = CreateFramePool("FRAME", AnotherFrameScrollFrame, "FriendsFrameFriendInviteTemplate");
-	HybridScrollFrame_CreateButtons(AnotherFrameScrollFrame, "FriendsListButtonTemplate");
-
-end
-
-
 
 local Lasttime = 0 -- 上一次单机点击的时间
 local LastButtonID = 0 -- 上次单击点击的按钮ID
@@ -477,16 +460,30 @@ local function ini_ButtonScript()
 	end
 end
 
-local function Event_Handler(self, event)
+local function event_Handler(self, event)
 	if event == "PLAYER_LOGIN" then
 		AnotherFriendsList_Update(true)
 	end
 end
 
 
-local Listener = CreateFrame("Frame")
-Listener:RegisterEvent("PLAYER_LOGIN")
-Listener:SetScript("OnEvent", Event_Handler)
+-- 滚动框体的初始化
+local function ini_FriendFrame()
+
+	-- 在好友框体中创建另一个滚动框体
+	local AnotherFrameScrollFrame = CreateFrame("ScrollFrame","AnotherFriendsListFrameScrollFrame",FriendsListFrame,"FriendsFrameScrollFrame")
+	AnotherFrameScrollFrame:ClearAllPoints()
+	AnotherFrameScrollFrame:SetPoint("LEFT", FriendsListFrameScrollFrame,"RIGHT", 50,0)
+	AnotherFrameScrollFrame.update = AnotherFriendsFrame_UpdateFriends; -- 滚动框体的自更新
+	AnotherFrameScrollFrame.dynamic = AnotherFriendsList_GetScrollFrameTopButton;
+	-- scrollFrame.PendingInvitesHeaderButton:SetParent(scrollFrame.ScrollChild); -- 可能是获得好友邀请的按钮，我这次没有继承这个组件
+	AnotherFrameScrollFrame.dividerPool = CreateFramePool("FRAME", AnotherFrameScrollFrame, "FriendsFrameFriendDividerTemplate");
+	AnotherFrameScrollFrame.invitePool = CreateFramePool("FRAME", AnotherFrameScrollFrame, "FriendsFrameFriendInviteTemplate");
+	HybridScrollFrame_CreateButtons(AnotherFrameScrollFrame, "FriendsListButtonTemplate");
+
+	AnotherFrameScrollFrame:RegisterEvent("PLAYER_LOGIN")
+	AnotherFrameScrollFrame:SetScript("OnEvent", event_Handler)
+end
 
 ini_FriendFrame()
 ini_ButtonScript()

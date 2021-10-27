@@ -30,6 +30,6 @@ local function event_deal(self, event, ...)
     end
 end
 
-local temp = CreateFrame("Frame")
-temp:RegisterEvent("PLAYER_LOGIN")
-temp:SetScript("OnEvent", event_deal)
+local Listener = CreateFrame("Frame")
+Listener:RegisterEvent("PLAYER_LOGIN")
+Listener:SetScript("OnEvent", event_deal)
