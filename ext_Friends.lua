@@ -418,10 +418,10 @@ end
 
 
 
-Lasttime = 0 -- 上一次单机点击的时间
-LastButtonID = 0 -- 上次单击点击的按钮ID
+local Lasttime = 0 -- 上一次单机点击的时间
+local LastButtonID = 0 -- 上次单击点击的按钮ID
 -- 双击好友按钮的脚本处理程序
-function Double_Click_Button(button, btn)
+local function Double_Click_Button(button, btn)
 	if btn == "LeftButton" then
 		local curtime = GetTime();
 		local curbuttonId = button.id == LastButtonID

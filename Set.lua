@@ -23,23 +23,26 @@ end
 local function ini_SetFrameTab()
 
     -- 设置标签的ID
-    FRIEND_TAB_SET = 5
-    -- 修改暴雪的部分与TAB的相关变量
-    FRIEND_TAB_COUNT = 5
-    FriendsFrame.numTabs = FRIEND_TAB_COUNT
-    tinsert(FRIENDSFRAME_SUBFRAMES, "ExtUISetFrame")
+    local SET_FRIEND_TAB_ID = 5
 
     -- 创建一个名为FriendsFrameTab5的标签。为了兼容暴雪的API，命名只能是FriendsFrameTab5。
-    local Set_Tab = CreateFrame("Button", "FriendsFrameTab5", FriendsFrame, "FriendsFrameTabTemplate", FRIEND_TAB_SET)
+    local Set_Tab = CreateFrame("Button", "FriendsFrameTab5", FriendsFrame, "FriendsFrameTabTemplate", SET_FRIEND_TAB_ID)
     Set_Tab:SetPoint("LEFT" , FriendsFrameTab4 , "RIGHT" , -15 , 0)
     Set_Tab:SetText("设置")
     hooksecurefunc("FriendsFrame_Update", function ()
         local selectedTab = PanelTemplates_GetSelectedTab(FriendsFrame);
-        if selectedTab == FRIEND_TAB_SET then
+        if selectedTab == SET_FRIEND_TAB_ID then
             FriendsFrameInset:SetPoint("TOPLEFT", 4, -60);
             FriendsFrameIcon:SetTexture("Interface\\FriendsFrame\\Battlenet-Portrait");
             FriendsFrameTitleText:SetText("设置");
-            FriendsFrame_ShowSubFrame("ExtUISetFrame");
+            for index, value in pairs(FRIENDSFRAME_SUBFRAMES) do
+                _G[value]:Hide();
+            end
+            _G["ExtUISetFrame"]:Show()
+            PanelTemplates_SelectTab(Set_Tab)
+        else
+            _G["ExtUISetFrame"]:Hide()
+            PanelTemplates_DeselectTab(Set_Tab);
         end
     end)
 end
@@ -91,6 +94,8 @@ local function ini_SetFramePanel()
     end)
 
 
+
+
     -- 创建下拉按钮
     local FriendsDropDownButton = CreateFrame("Button", "SetFrameDropDownButton", SetFrame, "UIDropDownMenuTemplate")
     FriendsDropDownButton:SetPoint("TOPLEFT", SetFrame, "BOTTOMLEFT", 50, 250)
@@ -133,8 +138,8 @@ local function ini_SetFramePanel()
         end
     end
     FriendsDropDownButton:SetScript("OnShow", function (self)
-        UIDropDownMenu_Initialize(self, self.iniDropDownMean)
-        UIDropDownMenu_SetSelectedID(self, ExtUI_Friends_Config["setFriendsScrollFrame"]);
+        UIDropDownMenu_Initialize(self, self.iniDropDownMean) -- 可能这里照成污染
+        UIDropDownMenu_SetSelectedID(self, ExtUI_Friends_Config["setFriendsScrollFrame"]); -- 可能这里照成污染
         set_DropDownButtonWidth(self)
     end)
     UIDropDownMenu_JustifyText(FriendsDropDownButton, "LEFT")

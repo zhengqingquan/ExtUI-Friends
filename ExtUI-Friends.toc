@@ -1,6 +1,6 @@
 ## Interface: 90100
 ## Title: ExtUI-Friends
-## Version: |cffffffffv1.0.0
+## Version: |cffffffffv1.0.2
 ## Author: 嚣张的扇贝
 
 ## Notes: Extends the friends interface for easier browsing.
