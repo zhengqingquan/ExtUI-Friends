@@ -21,3 +21,4 @@ ext_QuickJoin.lua
 color.lua
 Buddies.lua
 ElvUI_Support.lua
+Aby_Support.lua
