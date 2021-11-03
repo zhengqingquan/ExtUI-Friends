@@ -1,0 +1,3 @@
+local addonName, nameSpace = ...
+
+nameSpace.Modules = {}

@@ -8,7 +8,7 @@
 
 ## SavedVariables: ExtUI_Friends_Config
 
-
+core.lua
 ext_Main.lua
 Set.lua
 Config.lua
@@ -20,5 +20,5 @@ ext_Raid.lua
 ext_QuickJoin.lua
 color.lua
 Buddies.lua
-ElvUI_Support.lua
-Aby_Support.lua
+Support\ElvUI_Support.lua
+Support\Aby_Support.lua

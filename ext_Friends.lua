@@ -2,11 +2,6 @@
 -- 这里是对好友列表（好友滚动窗体）的扩展。
 -- 添加了好友框体右侧的新框体。
 --========================================
---========================================
--- 后续会添加右键的魔兽角色私聊。
--- 添加在右框体添加不同的配置。
--- 仅需在AnotherFriendsFrame_UpdateFriendButton和AnotherFriendsList_Update中做调整。
---========================================
 
 -- 暴雪的好友按钮高度定义
 local FRIENDS_BUTTON_HEIGHTS = FRIENDS_BUTTON_HEIGHTS
@@ -63,6 +58,24 @@ local function GetOnlineInfoText(client, isMobile, rafLinkType, locationText)
 	end
 	return locationText;
 end
+
+local function ShowHighlight(button)
+	local index = button.index; -- 当前按钮的索引 这里指的是第几个按钮
+	if FriendsFrame.beClick == "AnotherFriendsListFrameScrollFrame" then
+		if (FriendsFrame.AnotherSelectedFriendType == button.buttonType) and (FriendsFrame.AnotherSelectedFriend == button.id) then
+			button:LockHighlight();
+		else
+			button:UnlockHighlight();
+		end
+	else
+		if  (FriendsFrame.selectedFriendType == button.buttonType) and (FriendsFrame.selectedFriend == button.id) then
+			button:LockHighlight();
+		else
+			button:UnlockHighlight();
+		end
+	end
+end
+
 
 -- For a hybrid scroll frame with buttons of varying size,
 -- set .dynamic on the scroll frame to be a function which will take the offset and return:
@@ -185,12 +198,8 @@ function AnotherFriendsFrame_UpdateFriendButton(button)
 	end
 
 	-- selection
-	-- 按钮是否被选中
-	if  (FriendsFrame.selectedFriendType == AnotherFriendListEntries[index].buttonType) and (FriendsFrame.selectedFriend == AnotherFriendListEntries[index].id) then
-		button:LockHighlight();
-	else
-		button:UnlockHighlight();
-	end
+	-- 是否被选中，当被选中时高亮。
+	ShowHighlight(button)
 
 	-- finish setting up button if it's not a header
 	-- 如果不是标题或分隔线，则完成按钮的设置。
@@ -401,6 +410,33 @@ local function AnotherFriendsList_Update(forceUpdate)
 end
 
 
+local function click_change_light()
+	if FriendsFrame.beClick == "FriendsListFrameScrollFrame" then
+		local scrollFrame = FriendsListFrameScrollFrame
+		local buttons = scrollFrame.buttons;
+		for i = 1, #buttons do
+			local button = buttons[i];
+			if  (FriendsFrame.selectedFriendType == button.buttonType) and (FriendsFrame.selectedFriend == button.id) then
+				button:LockHighlight();
+			else
+				button:UnlockHighlight();
+			end
+		end
+	elseif FriendsFrame.beClick == "AnotherFriendsListFrameScrollFrame" then
+		local scrollFrame = FriendsListFrameScrollFrame
+		local buttons = scrollFrame.buttons;
+		for i = 1, #buttons do
+			local button = buttons[i];
+			if  (FriendsFrame.AnotherSelectedFriendType == button.buttonType) and (FriendsFrame.AnotherSelectedFriend == button.id) then
+				button:LockHighlight();
+			else
+				button:UnlockHighlight();
+			end
+		end
+	end
+	
+end
+
 local Lasttime = 0 -- 上一次单机点击的时间
 local LastButtonID = 0 -- 上次单击点击的按钮ID
 -- 双击好友按钮的脚本处理程序
@@ -449,14 +485,26 @@ local function ini_ButtonScript()
 	local buttons = scrollFrame.buttons;
 	for i = 1, #buttons do
 		local button = buttons[i];
-		button:SetScript("OnClick", Double_Click_Button)
+		button:SetScript("OnClick", function (arg_button, btn)
+			FriendsFrame.beClick = "AnotherFriendsListFrameScrollFrame"
+			FriendsFrame.AnotherSelectedFriendType = arg_button.buttonType;
+			FriendsFrame.AnotherSelectedFriend = arg_button.id;
+			click_change_light()
+			AnotherFriendsList_Update()
+			Double_Click_Button(arg_button, btn)
+		end)
 	end
 
 	scrollFrame = FriendsListFrameScrollFrame;
 	buttons = scrollFrame.buttons;
 	for i = 1, #buttons do
 		local button = buttons[i];
-		button:HookScript("OnClick", Double_Click_Button)
+		button:HookScript("OnClick", function (arg_button, btn)
+			FriendsFrame.beClick = "FriendsListFrameScrollFrame"
+			click_change_light()
+			AnotherFriendsList_Update()
+			Double_Click_Button(arg_button, btn)
+		end)
 	end
 end
 
@@ -488,3 +536,5 @@ end
 ini_FriendFrame()
 ini_ButtonScript()
 hooksecurefunc("FriendsList_Update", AnotherFriendsList_Update)
+
+hooksecurefunc("FriendsFrame_UpdateFriendButton", ShowHighlight)

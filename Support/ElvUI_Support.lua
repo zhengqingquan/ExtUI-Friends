@@ -1,7 +1,10 @@
+--========================================
+-- 对ElvUI插件的兼容
+--========================================
 
 local function ElvUI_Support()
     local E = ElvUI[1];
-    local S = E:GetModule("Skins"); -- 皮肤模块
+    local S = E:GetModule("Skins"); -- ElvUI的皮肤模块
     if E.private.skins.blizzard.enable and E.private.skins.blizzard.friends then
         WhoFrameColumnHeader5:StripTextures()
         WhoFrameColumnHeader6:StripTextures()
