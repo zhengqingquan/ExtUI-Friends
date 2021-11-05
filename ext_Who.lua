@@ -6,9 +6,18 @@
 --========================================
 -- 后续希望可以提高一下刷新按钮的更新效率。
 --========================================
-local function ini_WhoFrame()
+local addonName, nameSpace = ...
+if not nameSpace.Modules then
+    nameSpace.Modules = {}
+end
+local Modules = nameSpace.Modules
+local ExtWho = CreateFrame("Frame")
+Modules["ExtWhoModule"] = ExtWho
+tinsert(Modules, ExtWho)
 
-	local who_sortType_list = WHOFRAME_DROPDOWN_LIST
+function ExtWho:ini_WhoFrame()
+
+	local WHOFRAME_DROPDOWN_LIST = WHOFRAME_DROPDOWN_LIST
 
 	local scrollFrame = WhoListScrollFrame;
 	scrollFrame:SetWidth(655)
@@ -17,17 +26,17 @@ local function ini_WhoFrame()
 	scrollFrame.scrollChild:SetWidth(WhoListScrollFrame_width) -- 滚动框体
 
 	-- 稍微调整WhoFrameTotals的位置
-	WhoFrameTotals:SetPoint("BOTTOM", "WhoFrameEditBoxInset","TOP",0,2)
+	WhoFrameTotals:SetPoint("BOTTOM", "WhoFrameEditBoxInset","TOP", 0, 2)
 
 	-- 取消下拉菜单。
 	-- 但需要给个默认值，否则下拉菜单的返回值为空白，会导致不显示地区信息。
 	WhoFrameDropDown:Hide()
-	WhoFrameDropDown.selectedID = 1
+	WhoFrameDropDown.selectedID = 1 -- 这地方会造成污染？
 
 	-- 把下拉菜单的地区排序功能嫁接到地区标签上。
 	WhoFrameColumnHeader2:SetText("地区")
 	WhoFrameColumnHeader2:SetScript("OnClick",function ()
-		C_FriendList.SortWho(who_sortType_list[1].sortType); -- 地区排序
+		C_FriendList.SortWho(WHOFRAME_DROPDOWN_LIST[1].sortType); -- 地区排序
 	end)
 
 	-- 新创建标签页-公会
@@ -35,7 +44,7 @@ local function ini_WhoFrame()
 	tag_guild:SetPoint("LEFT", WhoFrameColumnHeader4, "RIGHT", -2, 0)
 	tag_guild:SetText("公会")
 	tag_guild:SetScript("OnClick",function ()
-		C_FriendList.SortWho(who_sortType_list[2].sortType); -- 公会排序
+		C_FriendList.SortWho(WHOFRAME_DROPDOWN_LIST[2].sortType); -- 公会排序
 	end)
 
 	-- 新创建标签页-种族
@@ -43,7 +52,7 @@ local function ini_WhoFrame()
 	tag_race:SetPoint("LEFT", WhoFrameColumnHeader5, "RIGHT", -2, 0)
 	tag_race:SetText("种族")
 	tag_race:SetScript("OnClick",function ()
-		C_FriendList.SortWho(who_sortType_list[3].sortType); -- 种族排序
+		C_FriendList.SortWho(WHOFRAME_DROPDOWN_LIST[3].sortType); -- 种族排序
 	end)
 
 	-- 设置WHO上方标签的长度，同时影响标签高亮材质
@@ -52,7 +61,7 @@ local function ini_WhoFrame()
 	WhoFrameColumn_SetWidth(WhoFrameColumnHeader3, 40) -- 等级
 	WhoFrameColumn_SetWidth(WhoFrameColumnHeader4, 80) -- 职业
 	WhoFrameColumn_SetWidth(tag_guild, 170) -- 公会
-	WhoFrameColumn_SetWidth(tag_race, 100) -- 种族
+	WhoFrameColumn_SetWidth(tag_race, 107) -- 种族
 
 	-- 为childchild中的按钮添加新的字符串。分别为公会Guild，和种族Race，层级为BORDER，继承自GameFontHighlightSmall。
 	-- 参考：
@@ -73,13 +82,13 @@ local function ini_WhoFrame()
 
 		-- 为按钮创建公会字符串区域
 		button.Guild = button:CreateFontString(nil, "BORDER", "GameFontHighlightSmall") -- 自引用
-		button.Guild:SetPoint("LEFT",button.Class, "RIGHT",2,0)
+		button.Guild:SetPoint("LEFT",button.Class, "RIGHT", 2, 0)
 		button.Guild:SetWordWrap(false) -- 不换行
 		button.Guild:SetJustifyH("LEFT") -- 左对齐
 
 		-- 为按钮创建种族字符串区域
 		button.Race = button:CreateFontString(nil, "BORDER", "GameFontHighlightSmall") -- 自引用
-		button.Race:SetPoint("LEFT",button.Guild, "RIGHT",2,0)
+		button.Race:SetPoint("LEFT",button.Guild, "RIGHT", 2, 0)
 		button.Race:SetWordWrap(false) -- 不换行
 		button.Race:SetJustifyH("LEFT") -- 左对齐
 
@@ -93,7 +102,7 @@ local function ini_WhoFrame()
 	end
 end
 
-local function hook_Wholist()
+function ExtWho:hook_Wholist()
 	local scrollFrame = WhoListScrollFrame;
 	local buttons = scrollFrame.buttons;
 	local offset = HybridScrollFrame_GetOffset(scrollFrame);
@@ -117,9 +126,9 @@ end
 
 -- WhoList_Update的钩子函数，用来处理排序的显示问题。
 -- WhoList_Update的频率并不算高。除了一些常规触发以外，事件WHO_LIST_UPDATE触发会调用几次
-hooksecurefunc("WhoList_Update", hook_Wholist)
+hooksecurefunc("WhoList_Update", ExtWho.hook_Wholist)
 -- 注意：需要重新注入函数才能确保WhoListScrollFrame界面的正常刷新和滚动显示。
 -- WhoListScrollFrame.update似乎跟HybridScrollFrame_Update函数相关，会影响滚动框体的滚动更新。
 WhoListScrollFrame.update = WhoList_Update
 
-ini_WhoFrame()
+ExtWho:ini_WhoFrame()

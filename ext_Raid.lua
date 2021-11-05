@@ -5,12 +5,22 @@
 --========================================
 -- 如果团队信息没打过，按钮是灰色的，更改成即使是没打过也可以显示，只是它是空的内容。
 -- 之后将团队信息框体也做一个长度的扩展。
--- 需要添加，进入团队的时候执行一次ini_RaidGroup
 --========================================
+-- 内存占用：最高6KiB，最低5KiB
+--========================================
+local addonName, nameSpace = ...
+if not nameSpace.Modules then
+    nameSpace.Modules = {}
+end
+local Modules = nameSpace.Modules
+local ExtRaid = CreateFrame("Frame")
+Modules["ExtRaidModule"] = ExtRaid
+tinsert(Modules, ExtRaid)
 
+-- 进入团队的时候执行一次ini_RaidFrame()的标志位，因为不需要每次队员变化都执行一次。
 local first_enter_raid_flag = false
 
-local function ini_RaidFrame()
+function ExtRaid:ini_RaidFrame()
 	-- 团队面板的描述部分。RaidFrameRaidDescription被放在RaidFrameNotInRaid.XML
 	local Raid_Width = FriendsFrame:GetWidth()
 	local RaidDescriptionPanel = RaidFrameRaidDescription
@@ -18,7 +28,7 @@ local function ini_RaidFrame()
 	RaidDescriptionPanel:SetPoint("TOPLEFT", 50 , -73)
 end
 
-local function ini_RaidGroup()
+function ExtRaid:ini_RaidGroup()
 
 	if first_enter_raid_flag then
 		return
@@ -47,6 +57,7 @@ local function ini_RaidGroup()
 		buttonClass:SetPoint("LEFT", buttonLevel, "RIGHT", ofsx2, 0)
 		buttonName:SetWidth(Name_width)
 		buttonName:SetPoint("LEFT", buttonClass, "RIGHT", ofsx2, 0)
+
 	end
 
 
@@ -75,25 +86,25 @@ local function ini_RaidGroup()
 end
 
 
-local function event_Handler(self, event)
-	if event == "GROUP_ROSTER_UPDATE" then
-		ini_RaidGroup()
-	elseif ( event == "PLAYER_LOGIN" ) then
+function ExtRaid:event_Handler(event, ...)
+	if ( event == "PLAYER_LOGIN" ) then
 		if IsInRaid() then
-			ini_RaidGroup()
+			self:ini_RaidGroup()
 		end
+	elseif event == "GROUP_ROSTER_UPDATE" then
+		self:ini_RaidGroup()
 	end
 end
 
-ini_RaidFrame()
 
--- 由于未知的原因无法使用钩子函数钩住RaidGroupFrame_Update()
+
+-- 由于未知的原因无法使用钩子函数钩住RaidGroupFrame_Update()，只能使用事件处理。
 -- hooksecurefunc("RaidGroupFrame_Update", function ()
 -- 	ini_RaidGroup()
 -- end)
-
-local Listener = CreateFrame("Frame")
-Listener:SetScript("OnEvent", event_Handler)
-Listener:RegisterEvent("GROUP_ROSTER_UPDATE")
-Listener:RegisterEvent("PLAYER_LOGIN")
--- frametemp:RegisterEvent("PLAYER_ENTERING_WORLD")
+ExtRaid:ini_RaidFrame()
+ExtRaid:SetScript("OnEvent", ExtRaid.event_Handler)
+ExtRaid:RegisterEvent("GROUP_ROSTER_UPDATE") -- 团队成立或解散，玩家离开或加入团队，或团队成员的队伍位置发生改变时触发
+-- ExtRaid:RegisterEvent("GROUP_JOINED") -- 进入队伍就会触发
+ExtRaid:RegisterEvent("PLAYER_LOGIN")
+-- ExtRaid:RegisterEvent("PLAYER_ENTERING_WORLD")

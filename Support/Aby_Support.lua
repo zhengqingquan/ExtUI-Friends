@@ -1,6 +1,15 @@
 --========================================
 -- 对爱不易插件的兼容
 --========================================
+local addonName, nameSpace = ...
+if not nameSpace.Modules then
+    nameSpace.Modules = {}
+end
+local Modules = nameSpace.Modules
+local AbySupport = CreateFrame("Frame")
+Modules["AbySupportModule"] = AbySupport
+tinsert(Modules, AbySupport)
+
 
 -- CLASS_ENG的定义属于爱不易
 local CLASS_ENG = {}
@@ -54,7 +63,7 @@ local function Aby_Support()
     end
 
     -- 使用后钩让右侧的好友滚动框体中好友信息内容与爱不易的插件保持一致。
-    if AnotherFriendsListFrameScrollFrame then
+    if Modules["ExtFriendsModule"] then
         local origfunc = AnotherFriendsFrame_UpdateFriendButton
 
         local function newfunc(arg1, ...)
@@ -68,13 +77,12 @@ local function Aby_Support()
 end
 
 
-local function event_Handler(self, event, ...)
+function AbySupport:event_Handler(event, ...)
     if event == "PLAYER_LOGIN" and IsAddOnLoaded("163UI_Plugins") then
         Aby_Support()
     end
 end
 
 
-local Listener = CreateFrame("Frame")
-Listener:RegisterEvent("PLAYER_LOGIN")
-Listener:SetScript("OnEvent", event_Handler)
+AbySupport:RegisterEvent("PLAYER_LOGIN")
+AbySupport:SetScript("OnEvent", AbySupport.event_Handler)

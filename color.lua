@@ -7,12 +7,21 @@
 --========================================
 -- 内存占用：最高9MiB左右，最低5KiB
 --========================================
+local addonName, nameSpace = ...
+if not nameSpace.Modules then
+    nameSpace.Modules = {}
+end
+local Modules = nameSpace.Modules
+local ColorFriends = CreateFrame("Frame")
+Modules["ColorModule"] = ColorFriends
+tinsert(Modules, ColorFriends)
+
 local CLASS_COLORS = {} -- 用于存放职业名称本地化与原本名称的映射
 for classFile, className in pairs(LOCALIZED_CLASS_NAMES_MALE) do
     CLASS_COLORS[className] = classFile
 end
 
-local function color_button(button)
+function ColorFriends:color_button3(button)
     -- local index = button.index
     local buttonType = button.buttonType
     local id = button.id
@@ -90,33 +99,46 @@ local function color_button(button)
     end
 end
 
--- 有参数的更新方法
-local function color_change(button)
-    color_button(button)
-end
 
 -- 无参数的更新方法
-local function color_change2()
+function ColorFriends:color_change2()
     local scrollFrame = FriendsListFrameScrollFrame
     local offset = HybridScrollFrame_GetOffset(scrollFrame)
     local buttons = scrollFrame.buttons
     for i = 1, #buttons do
         local button = buttons[i]
-        color_button(button)
+        ColorFriends:color_button3(button)
     end
 end
 
 
-hooksecurefunc(FriendsListFrameScrollFrame, 'update', color_change2)
-hooksecurefunc('FriendsFrame_UpdateFriends', color_change2)
-hooksecurefunc("FriendsFrame_UpdateFriendButton", color_button)
+hooksecurefunc(FriendsListFrameScrollFrame, 'update', ColorFriends.color_change2)
+hooksecurefunc('FriendsFrame_UpdateFriends', ColorFriends.color_change2)
 
+-- 不知道为什么无法把参数传递完整。
+-- 可能是因为obj:func()和obj.func()调用的差别，其中查了一个self参数？
+-- hooksecurefunc("FriendsFrame_UpdateFriendButton", function (button)
+--     ColorFriends:color_button3(button)
+-- end)
+
+--=======================================================================
+-- 对上面代码的测试
+-- local dwao={}
+-- function dwao:print(arg)
+--     print(arg)
+-- end
+-- hooksecurefunc("FriendsFrame_UpdateFriendButton", function (arg)
+--     -- print(arg)
+--     dwao:print(arg)
+-- end)
+-- hooksecurefunc("FriendsFrame_UpdateFriendButton", dwao.print)
+--=========================================================================
 
 -- 做一个后钩处理。如果使用hooksecurefunc会污染路径。
-if AnotherFriendsListFrameScrollFrame then
+if Modules["ExtFriendsModule"] then
     local origfunc = AnotherFriendsFrame_UpdateFriendButton
     local function newfunc(arg1, ...)
-        return arg1, color_button(...)
+        return arg1, ColorFriends:color_button3(...)
     end
 
     function AnotherFriendsFrame_UpdateFriendButton(...)

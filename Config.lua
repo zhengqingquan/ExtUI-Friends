@@ -4,6 +4,8 @@
 --========================================
 -- 后续添加将好友名称替换成备注的功能。
 --========================================
+local addonName, nameSpace = ...
+local Modules = nameSpace.Modules
 
 local function right_click_update(self)
     if ExtUI_Friends_Config["rightClickWhisperRole"] then

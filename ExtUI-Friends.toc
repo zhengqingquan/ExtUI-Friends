@@ -1,6 +1,6 @@
-## Interface: 90100
+## Interface: 90105
 ## Title: ExtUI-Friends
-## Version: |cffffffffv1.0.5
+## Version: |cffffffffv1.0.6
 ## Author: 嚣张的扇贝
 
 ## Notes: Extends the friends interface for easier browsing.
@@ -8,7 +8,7 @@
 
 ## SavedVariables: ExtUI_Friends_Config
 
-core.lua
+
 ext_Main.lua
 Set.lua
 Config.lua

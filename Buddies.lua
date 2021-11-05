@@ -2,13 +2,21 @@
 -- 移植MyBuddies插件，原作者是Kyhze。
 -- 这部分其实还没有进行充分的测试，
 -- 但我想它应该可以运行得很好。
--- 后续会添加其它的功能。
+-- 后续会试着添加其它的功能。
 --========================================
 -- 内存占用：最高6KiB，最低5KiB
 --========================================
+local addonName, nameSpace = ...
+if not nameSpace.Modules then
+    nameSpace.Modules = {}
+end
+local Modules = nameSpace.Modules
+local Buddies = CreateFrame("Frame")
+Modules["BuddiesModule"] = Buddies
+tinsert(Modules, Buddies)
 
 -- Buddies按钮的初始化
-local function ini_BuddiesButton()
+function Buddies:ini_BuddiesButton()
 
     -- 好友数量按钮
     local FriendsNumButton = CreateFrame("Button", "ExtUIFriendsNumButton", FriendsListFrame)
@@ -23,21 +31,23 @@ local function ini_BuddiesButton()
     FriendsNumButton.buttonFontString = FriendsNumButton:CreateFontString("ExtUIFriendsNumButtonFontString", "ARTWORK", "GameFontNormal")
     FriendsNumButton.buttonFontString:SetPoint("CENTER")
     FriendsNumButton.buttonFontString:SetTextColor(0.345, 0.667, 0.867)
-    -- 好友数量按钮的脚本
-    FriendsNumButton.funUpdate = function ()
+    -- 好友数量按钮的特殊更新函数
+    function FriendsNumButton:funUpdate()
         local bnetCount = BNGetNumFriends().."|cff416380/200|r"
-        FriendsNumButton.buttonFontString:SetText(bnetCount)
+        self.buttonFontString:SetText(bnetCount)
     end
-    FriendsNumButton:SetScript("OnShow",function (self)
-        self:funUpdate()
-    end)
-    FriendsNumButton:SetScript("OnEvent", function (self, event, ...)
+    -- 好友数量按钮的脚本
+    function FriendsNumButton:eventHandler(event, ...)
         if event == "BN_FRIEND_LIST_SIZE_CHANGED" then
             self:funUpdate()
         end
-    end)
-    -- 屏蔽数量按钮的注册事件
-    FriendsNumButton:RegisterEvent("BN_FRIEND_LIST_SIZE_CHANGED")
+    end
+    function FriendsNumButton:showHandler()
+        self:funUpdate()
+    end
+    FriendsNumButton:SetScript("OnShow",FriendsNumButton.showHandler)
+    FriendsNumButton:SetScript("OnEvent", FriendsNumButton.eventHandler)
+    FriendsNumButton:RegisterEvent("BN_FRIEND_LIST_SIZE_CHANGED") -- 注册好友数量大小更新事件
 
     -- 屏蔽数量按钮
     local IgnoreNumButton = CreateFrame("Button", "IgnoreNumFrame", IgnoreListFrame)
@@ -52,33 +62,33 @@ local function ini_BuddiesButton()
     IgnoreNumButton.buttonFontString = IgnoreNumButton:CreateFontString("ExtUIIgnoreNumButtonFontString", "ARTWORK", "GameFontNormal")
     IgnoreNumButton.buttonFontString:SetPoint("CENTER")
     IgnoreNumButton.buttonFontString:SetTextColor(0.345, 0.667, 0.867)
-    -- 屏蔽数量按钮的脚本
+    -- 好友数量按钮的特殊更新函数
     IgnoreNumButton.funUpdate = function ()
         local IgnoreCount = C_FriendList.GetNumIgnores().."|cff416380/50|r"
         IgnoreNumButton.buttonFontString:SetText(IgnoreCount)
     end
-    IgnoreNumButton:SetScript("OnShow",function (self)
-        self:funUpdate()
-    end)
-    IgnoreNumButton:SetScript("OnEvent", function (self, event, ...)
+    -- 屏蔽数量按钮的脚本
+    function IgnoreNumButton:eventHandler(event, ...)
         if  event == "IGNORELIST_UPDATE" then
             self:funUpdate()
         end
-    end)
-    -- 屏蔽数量按钮的注册事件
-    IgnoreNumButton:RegisterEvent("IGNORELIST_UPDATE")
+    end
+    function IgnoreNumButton:showHandler()
+        self:funUpdate()
+    end
+    IgnoreNumButton:SetScript("OnShow",IgnoreNumButton.showHandler)
+    IgnoreNumButton:SetScript("OnEvent", IgnoreNumButton.eventHandler)
+    IgnoreNumButton:RegisterEvent("IGNORELIST_UPDATE") -- 注册屏蔽数量大小更新事件
 end
 
-local function event_Handler(self, event, ...)
-
+function Buddies:event_Handler(event, ...)
 	if event == "PLAYER_LOGIN" then
         if IsAddOnLoaded("MyBuddies") then
             return
         end
-        ini_BuddiesButton()
+        self:ini_BuddiesButton() -- 初始化被放在了加载之后，因为需要判断MyBuddies插件是否被加载。
 	end
 end
 
-local Listener = CreateFrame("Frame")
-Listener:RegisterEvent("PLAYER_LOGIN")
-Listener:SetScript("OnEvent", event_Handler)
+Buddies:SetScript("OnEvent", Buddies.event_Handler)
+Buddies:RegisterEvent("PLAYER_LOGIN")

@@ -2,6 +2,14 @@
 -- 这里是对好友列表（好友滚动窗体）的扩展。
 -- 添加了好友框体右侧的新框体。
 --========================================
+local addonName, nameSpace = ...
+if not nameSpace.Modules then
+    nameSpace.Modules = {}
+end
+local Modules = nameSpace.Modules
+local ExtFriends = CreateFrame("Frame")
+Modules["ExtFriendsModule"] = ExtFriends
+tinsert(Modules, ExtFriends)
 
 -- 暴雪的好友按钮高度定义
 local FRIENDS_BUTTON_HEIGHTS = FRIENDS_BUTTON_HEIGHTS
@@ -532,6 +540,7 @@ local function ini_FriendFrame()
 	AnotherFrameScrollFrame:RegisterEvent("PLAYER_LOGIN")
 	AnotherFrameScrollFrame:SetScript("OnEvent", event_Handler)
 end
+
 
 ini_FriendFrame()
 ini_ButtonScript()

@@ -6,6 +6,14 @@
 --========================================
 -- 后续会添加对插件的配置。
 --========================================
+local addonName, nameSpace = ...
+if not nameSpace.Modules then
+    nameSpace.Modules = {}
+end
+local Modules = nameSpace.Modules
+local ExtMain = CreateFrame("Frame")
+Modules["ExtMainModule"] = ExtMain
+tinsert(Modules, ExtMain)
 
 local OVERALLWIDTH = 690 -- 整体框体的宽度，例如FriendsFrame
 local INSIDEWIDTH = 655 -- 内嵌框体的宽度，例如FrameScrollFrame
@@ -13,7 +21,7 @@ local BATTLENTIDWIDTH = 540 -- 战网ID框体的宽度，例如FriendsFrameBattl
 local initial_width_FriendsFrame = FriendsFrame:GetWidth() -- FriendsFrame的初始宽度
 local initial_width_FriendsFrameBattlenetFrame = FriendsFrameBattlenetFrame:GetWidth() -- FriendsFrameBattlenetFrame的初始宽度
 
-local function ExtFriends_OnLoad()
+function ExtMain:ExtFriends_OnLoad()
 
 	-- 整个好友框体扩展
     FriendsFrame:SetWidth(OVERALLWIDTH)
@@ -28,7 +36,7 @@ local function ExtFriends_OnLoad()
 
 end
 
-ExtFriends_OnLoad()
+ExtMain:ExtFriends_OnLoad()
 
 
 
@@ -72,6 +80,50 @@ SlashCmdList["EXTF"] = textfunction
 -- 	print(issecurevariable("UIDROPDOWNMENU_MENU_VALUE"))
 -- end)
 --]]
+
+-- =================================
+-- print(FRIENDS_BUTTON_HEIGHTS.FRIENDS_BUTTON_TYPE_DIVIDER)
+-- print(FRIENDS_BUTTON_HEIGHTS["FRIENDS_BUTTON_TYPE_DIVIDER"])
+-- print(FRIENDS_BUTTON_HEIGHTS[1])
+-- print(FRIENDS_BUTTON_HEIGHTS[FRIENDS_BUTTON_TYPE_DIVIDER])
+-- FRIENDS_BUTTON_HEIGHTS[1] = 16
+-- print(issecurevariable(FRIENDS_BUTTON_HEIGHTS,FRIENDS_BUTTON_TYPE_DIVIDER))
+-- print(issecurevariable(FRIENDS_BUTTON_HEIGHTS,"FRIENDS_BUTTON_TYPE_DIVIDER"))
+-- print(issecurevariable(FRIENDS_BUTTON_HEIGHTS, 1))
+-- print(issecurevariable(FRIENDS_BUTTON_HEIGHTS,"1"))
+-- FRIENDS_BUTTON_HEIGHTS[FRIENDS_BUTTON_TYPE_DIVIDER] = 16
+-- print(issecurevariable(FRIENDS_BUTTON_HEIGHTS,FRIENDS_BUTTON_TYPE_DIVIDER))
+
+
+-- print(UnitPopupButtons["CANCEL"])
+-- print(UnitPopupButtons.CANCEL)
+-- print(issecurevariable(UnitPopupButtons,"CANCEL"))
+-- print(UnitPopupButtons.CANCEL)
+-- print(UnitPopupButtons[CANCEL])
+-- UnitPopupButtons["CANCEL"]={ text = CANCEL, space = 1, isCloseCommand = true, }
+-- print(issecurevariable(UnitPopupButtons,"CANCEL"))
+-- print(issecurevariable("UnitPopupButtons"))
+
+-- array = {"Lua", "Tutorial"} -- table 类型
+-- print(issecurevariable(array))
+
+-- print(issecurevariable("FRIENDSFRAME_SUBFRAMES"))
+-- print(FRIENDSFRAME_SUBFRAMES[1])
+-- FRIENDSFRAME_SUBFRAMES[1] = "FriendsListFrame"
+-- print(issecurevariable("FRIENDSFRAME_SUBFRAMES"))
+
+-- print(issecurevariable("FRIENDSFRAME_SUBFRAMES")) -- true nil
+
+-- FRIENDSFRAME_SUBFRAMES = { "FriendsListFrame", "QuickJoinFrame", "IgnoreListFrame", "WhoFrame", "RecruitAFriendFrame", "RaidFrame" };
+
+-- print(issecurevariable("FRIENDSFRAME_SUBFRAMES")) -- true nil
+
+
+-- for index, value in pairs(FRIENDSFRAME_SUBFRAMES) do
+-- 	print(issecurevariable(value))
+-- end
+
+
 --================================================================================
 
 
@@ -96,6 +148,6 @@ end)
 
 -- 修正当团队成员改变时，边框下方会改变的情况。
 -- 依赖于GROUP_ROSTER_UPDATE事件
-hooksecurefunc("FrameTemplate_SetButtonBarHeight", function (self, buttonBarHeight)
+hooksecurefunc("FrameTemplate_SetButtonBarHeight", function(self, buttonBarHeight)
 	self.Inset:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", -6, 26);
 end)

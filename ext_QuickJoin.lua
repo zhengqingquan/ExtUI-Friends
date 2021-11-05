@@ -2,8 +2,17 @@
 -- 扩展快速加入的框体
 -- 目前还有一些需要改进的地方，尚未完成。
 --========================================
+local addonName, nameSpace = ...
+if not nameSpace.Modules then
+    nameSpace.Modules = {}
+end
+local Modules = nameSpace.Modules
+local ExtQuickJoin = CreateFrame("Frame")
+Modules["ExtQuickJoinModule"] = ExtQuickJoin
+tinsert(Modules, ExtQuickJoin)
 
-local function ini_QuickJoinFrame()
+function ExtQuickJoin:ini_QuickJoinFrame()
+
 	QuickJoinScrollFrame:SetWidth(655)
 	local QuickJoinScrollFrame_width = QuickJoinScrollFrame:GetWidth()
 	QuickJoinScrollFrame.scrollChild:SetWidth(QuickJoinScrollFrame_width) -- 滚动框体
@@ -51,4 +60,4 @@ local function ini_QuickJoinFrame()
 end
 
 
-ini_QuickJoinFrame()
+ExtQuickJoin:ini_QuickJoinFrame()

@@ -1,3 +1,6 @@
+local addonName, nameSpace = ...
+local Modules = nameSpace.Modules
+
 local SETFRAME_DROPDOWN_LIST = {
     {name = "noFavorite", text = "非亲密好友"},
     {name = "BNetInWOW", text = "在魔兽中的好友"},
@@ -113,7 +116,7 @@ local function ini_SetFramePanel()
         GameTooltip:Show();
     end)
     FriendsDropDownButton:SetScript("OnLeave", GameTooltip_Hide)
-    local function set_DropDownButtonWidth(frame)
+    function FriendsDropDownButton:set_DropDownButtonWidth(frame)
         local width
         if frame.Text:GetWidth() > 140 then
             width = 180
@@ -126,7 +129,7 @@ local function ini_SetFramePanel()
     local function click_DropDownMeanButton(button)
         ExtUI_Friends_Config["setFriendsScrollFrame"] = button:GetID()
         UIDropDownMenu_SetSelectedID(FriendsDropDownButton, ExtUI_Friends_Config["setFriendsScrollFrame"]);
-        set_DropDownButtonWidth(FriendsDropDownButton)
+        FriendsDropDownButton:set_DropDownButtonWidth(FriendsDropDownButton)
     end
     FriendsDropDownButton.iniDropDownMean= function ()
         local info = UIDropDownMenu_CreateInfo();
@@ -140,7 +143,7 @@ local function ini_SetFramePanel()
     FriendsDropDownButton:SetScript("OnShow", function (self)
         UIDropDownMenu_Initialize(self, self.iniDropDownMean) -- 可能这里照成污染
         UIDropDownMenu_SetSelectedID(self, ExtUI_Friends_Config["setFriendsScrollFrame"]); -- 可能这里照成污染
-        set_DropDownButtonWidth(self)
+        FriendsDropDownButton:set_DropDownButtonWidth(self)
     end)
     UIDropDownMenu_JustifyText(FriendsDropDownButton, "LEFT")
 end
