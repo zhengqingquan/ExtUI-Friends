@@ -1,5 +1,11 @@
 local addonName, nameSpace = ...
+if not nameSpace.Modules then
+    nameSpace.Modules = {}
+end
 local Modules = nameSpace.Modules
+local SetFrameModule = CreateFrame("Frame")
+Modules["SetFrameModule"] = SetFrameModule
+tinsert(Modules, SetFrameModule)
 
 local SETFRAME_DROPDOWN_LIST = {
     {name = "noFavorite", text = "非亲密好友"},
@@ -149,7 +155,7 @@ local function ini_SetFramePanel()
 end
 
 
-local function event_Handler(self, event, ...)
+function SetFrameModule:event_Handler(event, ...)
     if event == "PLAYER_LOGIN" then
         ini_Config()
     end
@@ -157,11 +163,10 @@ end
 
 ini_SetFrameTab()
 ini_SetFramePanel()
-local Listener = CreateFrame("Frame")
-Listener:SetScript("OnEvent", event_Handler)
--- Listener:RegisterEvent("PLAYER_ENTERING_WORLD") -- 玩家进入游戏  reload结束之后也会触发 玩家进出副本（读条）后会触发
--- Listener:RegisterEvent("PLAYER_LEAVING_WORLD") -- 玩家离开游戏 reload开始之前也会触发 玩家进出副本（读条）前会触发
-Listener:RegisterEvent("PLAYER_LOGIN") -- 玩家登录游戏 reload结束之后也会触发
--- Listener:RegisterEvent("PLAYER_LOGOUT") -- 玩家退出游戏 reload开始之前也会触发
--- Listener:RegisterEvent("ADDON_LOADED") -- 当任何一个插件被加载的时候触发该事件
+SetFrameModule:SetScript("OnEvent", SetFrameModule.event_Handler)
+-- SetFrameModule:RegisterEvent("PLAYER_ENTERING_WORLD") -- 玩家进入游戏  reload结束之后也会触发 玩家进出副本（读条）后会触发
+-- SetFrameModule:RegisterEvent("PLAYER_LEAVING_WORLD") -- 玩家离开游戏 reload开始之前也会触发 玩家进出副本（读条）前会触发
+SetFrameModule:RegisterEvent("PLAYER_LOGIN") -- 玩家登录游戏 reload结束之后也会触发
+-- SetFrameModule:RegisterEvent("PLAYER_LOGOUT") -- 玩家退出游戏 reload开始之前也会触发
+-- SetFrameModule:RegisterEvent("ADDON_LOADED") -- 当任何一个插件被加载的时候触发该事件
 

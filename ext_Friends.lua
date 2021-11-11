@@ -268,7 +268,6 @@ end
 -- 更新滚动框体的总计高度和索引数量。
 -- 最后会执行一次AnotherFriendsFrame_UpdateFriends()
 local function AnotherFriendsList_Update(forceUpdate)
-
 	-- 当forceUpdate为nil时，好友列表打开才会完整执行AnotherFriendsList_Update()。
 	-- 当forceUpdate为true时，无论好友列表是否显示，都会完整执行AnotherFriendsList_Update()。
 	if not FriendsListFrame:IsShown() and not forceUpdate then
@@ -418,107 +417,134 @@ local function AnotherFriendsList_Update(forceUpdate)
 end
 
 
-local function click_change_light()
-	if FriendsFrame.beClick == "FriendsListFrameScrollFrame" then
-		local scrollFrame = FriendsListFrameScrollFrame
-		local buttons = scrollFrame.buttons;
-		for i = 1, #buttons do
-			local button = buttons[i];
-			if  (FriendsFrame.selectedFriendType == button.buttonType) and (FriendsFrame.selectedFriend == button.id) then
-				button:LockHighlight();
-			else
-				button:UnlockHighlight();
-			end
-		end
-	elseif FriendsFrame.beClick == "AnotherFriendsListFrameScrollFrame" then
-		local scrollFrame = FriendsListFrameScrollFrame
-		local buttons = scrollFrame.buttons;
-		for i = 1, #buttons do
-			local button = buttons[i];
-			if  (FriendsFrame.AnotherSelectedFriendType == button.buttonType) and (FriendsFrame.AnotherSelectedFriend == button.id) then
-				button:LockHighlight();
-			else
-				button:UnlockHighlight();
-			end
-		end
-	end
-	
-end
-
 local Lasttime = 0 -- 上一次单机点击的时间
 local LastButtonID = 0 -- 上次单击点击的按钮ID
 -- 双击好友按钮的脚本处理程序
 local function Double_Click_Button(button, btn)
-	if btn == "LeftButton" then
-		local curtime = GetTime();
-		local curbuttonId = button.id == LastButtonID
-		local double = (curtime - Lasttime) < 0.25 -- 双击时间小于0.25秒
-		if double and curbuttonId then
+	local curtime = GetTime();
+	local curbuttonId = button.id == LastButtonID
+	local double = (curtime - Lasttime) < 0.25 -- 双击时间小于0.25秒
+	if double and curbuttonId then
 
-			if button.buttonType == FRIENDS_BUTTON_TYPE_WOW then -- 魔兽好友
-				local info = C_FriendList.GetFriendInfoByIndex(button.id);
-				if info.connected then
-					ChatFrame_SendTell(info.name)
-				end
-			elseif button.buttonType == FRIENDS_BUTTON_TYPE_BNET then -- 战网好友
-				local BNetAccountInfo = C_BattleNet.GetFriendAccountInfo(button.id); -- 获取战网账号信息 这里需要注意。跟战网的索引有个偏移量
-				local accountName = BNetAccountInfo.accountName-- 战网名
-				local gameAccountInfo = BNetAccountInfo.gameAccountInfo -- 游戏信息（table）
-				local characterName = gameAccountInfo.characterName -- 游戏角色名
-				local realmName = gameAccountInfo.realmName -- 服务器名（如果在其它客户端，如怀旧服则为nil）
-				local factionName = gameAccountInfo.factionName -- 阵营（联盟或部落，"Alliance"或"Horde"）
-				local player_faction = UnitFactionGroup("PLAYER") -- 自己的角色所在的阵营(联盟或部落，"Alliance"或"Horde")
-				local isSameFaction = player_faction == factionName -- 是否与你的当前角色是相同阵营
-
-				-- 在魔兽中的战网好友、同客户端、同阵营
-				if characterName and realmName and isSameFaction then
-					local fullname = characterName.."-"..realmName; -- 完整的角色名（角色名-服务器名）
-					ChatFrame_SendTell(fullname)
-				else
-					ChatFrame_SendBNetTell(accountName)
-				end
+		if button.buttonType == FRIENDS_BUTTON_TYPE_WOW then -- 魔兽好友
+			local info = C_FriendList.GetFriendInfoByIndex(button.id);
+			if info.connected then
+				ChatFrame_SendTell(info.name)
 			end
+		elseif button.buttonType == FRIENDS_BUTTON_TYPE_BNET then -- 战网好友
+			local BNetAccountInfo = C_BattleNet.GetFriendAccountInfo(button.id); -- 获取战网账号信息 这里需要注意。跟战网的索引有个偏移量
+			local accountName = BNetAccountInfo.accountName-- 战网名
+			local gameAccountInfo = BNetAccountInfo.gameAccountInfo -- 游戏信息（table）
+			local characterName = gameAccountInfo.characterName -- 游戏角色名
+			local realmName = gameAccountInfo.realmName -- 服务器名（如果在其它客户端，如怀旧服则为nil）
+			local factionName = gameAccountInfo.factionName -- 阵营（联盟或部落，"Alliance"或"Horde"）
+			local player_faction = UnitFactionGroup("PLAYER") -- 自己的角色所在的阵营(联盟或部落，"Alliance"或"Horde")
+			local isSameFaction = player_faction == factionName -- 是否与你的当前角色是相同阵营
+
+			-- 在魔兽中的战网好友、同客户端、同阵营
+			if characterName and realmName and isSameFaction then
+				local fullname = characterName.."-"..realmName; -- 完整的角色名（角色名-服务器名）
+				ChatFrame_SendTell(fullname)
+			else
+				ChatFrame_SendBNetTell(accountName)
+			end
+		end
+	else
+		Lasttime = curtime;
+		LastButtonID = button.id
+	end
+end
+
+
+local function OnClick_AnotherFriendsListFrameScrollFrame(button, btn)
+	FriendsFrame.beClick = "AnotherFriendsListFrameScrollFrame"
+	FriendsFrame.AnotherSelectedFriendType = button.buttonType;
+	FriendsFrame.AnotherSelectedFriend = button.id;
+
+	local scrollFrame = FriendsListFrameScrollFrame
+	local buttons = scrollFrame.buttons;
+	for i = 1, #buttons do
+		local button = buttons[i];
+		if  (FriendsFrame.AnotherSelectedFriendType == button.buttonType) and (FriendsFrame.AnotherSelectedFriend == button.id) then
+			button:LockHighlight();
 		else
-			Lasttime = curtime;
-			LastButtonID = button.id
+			button:UnlockHighlight();
 		end
 	end
+
+	-- 污染路径
+	-- Execution tainted by ExtUI-Friends while reading UIDROPDOWNMENU_MENU_VALUE - Interface\FrameXML\UnitPopup.lua:954 UnitPopup_HideButtons()
+	-- Interface\FrameXML\UnitPopup.lua:359 UnitPopup_ShowMenu()
+	-- Interface\FrameXML\FriendsFrame.lua:236 initFunction()
+	-- Interface\SharedXML\UIDropDownMenu.lua:78 UIDropDownMenu_Initialize()
+	-- Interface\SharedXML\UIDropDownMenu.lua:1069 ToggleDropDownMenu()
+	-- Interface\FrameXML\FriendsFrame.lua:223 FriendsFrame_ShowBNDropdown()
+	-- Interface\AddOns\ExtUI-Friends\ext_Friends.lua:484
+
+	if btn == "LeftButton" then
+		Double_Click_Button(button)
+	elseif btn == "RightButton" then
+		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+		if button.buttonType == FRIENDS_BUTTON_TYPE_BNET then
+			local accountInfo = C_BattleNet.GetFriendAccountInfo(button.id);
+			if accountInfo then
+				-- 这里会照成明显的污染。
+				FriendsFrame_ShowBNDropdown(accountInfo.accountName, accountInfo.gameAccountInfo.isOnline, nil, nil, nil, 1, accountInfo.bnetAccountID, nil, nil, nil, nil, accountInfo.gameAccountInfo.isWowMobile);
+			end
+		else
+			local info = C_FriendList.GetFriendInfoByIndex(button.id);
+			-- 这里会照成明显的污染。
+			FriendsFrame_ShowDropdown(info.name, info.connected, nil, nil, nil, 1, info.mobile, nil, nil, nil, nil, info.guid);
+		end
+	end
+
+	AnotherFriendsList_Update()
+end
+
+local function OnClick_FriendsListFrameScrollFrame(button, btn)
+	FriendsFrame.beClick = "FriendsListFrameScrollFrame"
+
+	-- 这部分是为了消除，当单击左框体——单击右框体——单击左框体时，产生的显示错误。
+	local scrollFrame = FriendsListFrameScrollFrame
+	local buttons = scrollFrame.buttons;
+	for i = 1, #buttons do
+		local button = buttons[i];
+		if  (FriendsFrame.selectedFriendType == button.buttonType) and (FriendsFrame.selectedFriend == button.id) then
+			button:LockHighlight();
+		else
+			button:UnlockHighlight();
+		end
+	end
+
+	if btn == "LeftButton" then
+		Double_Click_Button(button)
+	elseif btn == "RightButton" then
+		-- 左框体的右键高亮
+		for i = 1, #buttons do
+			local button = buttons[i];
+			button:UnlockHighlight();
+		end
+		button:LockHighlight();
+	end
+
+	AnotherFriendsList_Update()
 end
 
 -- 为滚动框体的按钮设置新的脚本
 local function ini_ButtonScript()
 
-	-- 重写AnotherFriendsListFrameScrollFrame的OnClick脚本，让其不触发污染。
+	-- 重写AnotherFriendsListFrameScrollFrame的OnClick脚本，为了让其不触发污染。
 	local scrollFrame = AnotherFriendsListFrameScrollFrame;
 	local buttons = scrollFrame.buttons;
 	for i = 1, #buttons do
-		local button = buttons[i];
-		button:SetScript("OnClick", function (arg_button, btn)
-			FriendsFrame.beClick = "AnotherFriendsListFrameScrollFrame"
-			FriendsFrame.AnotherSelectedFriendType = arg_button.buttonType;
-			FriendsFrame.AnotherSelectedFriend = arg_button.id;
-			click_change_light()
-			AnotherFriendsList_Update()
-			Double_Click_Button(arg_button, btn)
-		end)
+		buttons[i]:SetScript("OnClick", OnClick_AnotherFriendsListFrameScrollFrame)
 	end
 
+	-- 钩住FriendsListFrameScrollFrame的OnClick脚本，为了适配一些功能。
 	scrollFrame = FriendsListFrameScrollFrame;
 	buttons = scrollFrame.buttons;
 	for i = 1, #buttons do
-		local button = buttons[i];
-		button:HookScript("OnClick", function (arg_button, btn)
-			FriendsFrame.beClick = "FriendsListFrameScrollFrame"
-			click_change_light()
-			AnotherFriendsList_Update()
-			Double_Click_Button(arg_button, btn)
-		end)
-	end
-end
-
-local function event_Handler(self, event)
-	if event == "PLAYER_LOGIN" then
-		AnotherFriendsList_Update(true)
+		buttons[i]:HookScript("OnClick", OnClick_FriendsListFrameScrollFrame)
 	end
 end
 
@@ -537,10 +563,16 @@ local function ini_FriendFrame()
 	AnotherFrameScrollFrame.invitePool = CreateFramePool("FRAME", AnotherFrameScrollFrame, "FriendsFrameFriendInviteTemplate");
 	HybridScrollFrame_CreateButtons(AnotherFrameScrollFrame, "FriendsListButtonTemplate");
 
-	AnotherFrameScrollFrame:RegisterEvent("PLAYER_LOGIN")
-	AnotherFrameScrollFrame:SetScript("OnEvent", event_Handler)
 end
 
+
+function ExtFriends:event_Handler(event)
+	if event == "PLAYER_LOGIN" then
+		AnotherFriendsList_Update(true)
+	end
+end
+ExtFriends:RegisterEvent("PLAYER_LOGIN")
+ExtFriends:SetScript("OnEvent", ExtFriends.event_Handler)
 
 ini_FriendFrame()
 ini_ButtonScript()

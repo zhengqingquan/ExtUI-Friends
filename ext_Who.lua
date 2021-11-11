@@ -17,11 +17,15 @@ tinsert(Modules, ExtWho)
 
 function ExtWho:ini_WhoFrame()
 
-	local WHOFRAME_DROPDOWN_LIST = WHOFRAME_DROPDOWN_LIST
 
 	local scrollFrame = WhoListScrollFrame;
-	scrollFrame:SetWidth(655)
-	local WhoListScrollFrame_width = scrollFrame:GetWidth()
+	local WhoListScrollFrame_width
+    if Modules["ExtMainModule"] then
+		WhoListScrollFrame_width = Modules["ExtMainModule"].INSIDE_WIDTH
+		scrollFrame:SetWidth(WhoListScrollFrame_width)
+	else
+		WhoListScrollFrame_width = scrollFrame:GetWidth()
+	end
 	WhoFrameEditBox:SetWidth(WhoListScrollFrame_width) -- 编辑栏
 	scrollFrame.scrollChild:SetWidth(WhoListScrollFrame_width) -- 滚动框体
 
@@ -33,6 +37,7 @@ function ExtWho:ini_WhoFrame()
 	WhoFrameDropDown:Hide()
 	WhoFrameDropDown.selectedID = 1 -- 这地方会造成污染？
 
+	local WHOFRAME_DROPDOWN_LIST = WHOFRAME_DROPDOWN_LIST
 	-- 把下拉菜单的地区排序功能嫁接到地区标签上。
 	WhoFrameColumnHeader2:SetText("地区")
 	WhoFrameColumnHeader2:SetScript("OnClick",function ()
@@ -124,11 +129,11 @@ function ExtWho:hook_Wholist()
 	end
 end
 
+ExtWho:ini_WhoFrame()
+
 -- WhoList_Update的钩子函数，用来处理排序的显示问题。
 -- WhoList_Update的频率并不算高。除了一些常规触发以外，事件WHO_LIST_UPDATE触发会调用几次
 hooksecurefunc("WhoList_Update", ExtWho.hook_Wholist)
 -- 注意：需要重新注入函数才能确保WhoListScrollFrame界面的正常刷新和滚动显示。
 -- WhoListScrollFrame.update似乎跟HybridScrollFrame_Update函数相关，会影响滚动框体的滚动更新。
 WhoListScrollFrame.update = WhoList_Update
-
-ExtWho:ini_WhoFrame()

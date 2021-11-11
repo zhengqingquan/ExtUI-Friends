@@ -12,11 +12,12 @@ local ExtIgnore = CreateFrame("Frame")
 Modules["ExtIgnoreModule"] = ExtIgnore
 tinsert(Modules, ExtIgnore)
 
--- IgnoreListFrame
--- IgnoreListFrameScrollFrame 继承自 FriendsFrameScrollFrame
-function ExtIgnore:ini_IgnoreFrame()
-    local scrollFrame = IgnoreListFrameScrollFrame
-    scrollFrame:SetWidth(655)
+function ExtIgnore:iniIgnoreFrame()
+
+    if Modules["ExtMainModule"] then
+        IgnoreListFrameScrollFrame:SetWidth(Modules["ExtMainModule"].INSIDE_WIDTH)
+    end
+
 end
 
-ExtIgnore:ini_IgnoreFrame()
+ExtIgnore:iniIgnoreFrame()
